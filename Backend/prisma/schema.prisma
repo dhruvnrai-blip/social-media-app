@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PostVisibility {
+  PUBLIC
+  FOLLOWERS
+  PRIVATE
+}
+
+model User {
+  id String @id @default(uuid())
+
+  username String  @unique
+  email    String  @unique
+  password String?
+
+  firstName      String?
+  lastName       String?
+  bio            String?
+  profilePicture String?
+  location       String?
+  website        String?
+  bannerImage    String?
+
+  isPrivate Boolean @default(false)
+
+  isVerified        Boolean @default(false)
+  verificationToken String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
+  followers Follow[] @relation("UserFollowers")
+  following Follow[] @relation("UserFollowing")
+
+  sentFollowRequests     FollowRequest[] @relation("SentRequests")
+  receivedFollowRequests FollowRequest[] @relation("ReceivedRequests")
+
+  notifications     Notification[] @relation("UserNotifications")
+  sentNotifications Notification[] @relation("NotificationSender")
+
+  posts     Post[]
+  likes     Like[]
+  comments  Comment[]
+  bookmarks Bookmark[]
+}
+
+model Follow {
+  id String @id @default(uuid())
+
+  followerId  String
+  followingId String
+
+  follower  User     @relation("UserFollowing", fields: [followerId], references: [id])
+  following User     @relation("UserFollowers", fields: [followingId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model FollowRequest {
+  id String @id @default(uuid())
+
+  requesterId String
+  receiverId  String
+  status      String   @default("PENDING")
+  requester   User     @relation("SentRequests", fields: [requesterId], references: [id])
+  receiver    User     @relation("ReceivedRequests", fields: [receiverId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([requesterId, receiverId])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  type        String
+  recipientId String
+  senderId    String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  recipient User  @relation("UserNotifications", fields: [recipientId], references: [id])
+  sender    User? @relation("NotificationSender", fields: [senderId], references: [id])
+}
+
+model Post {
+  id String @id @default(uuid())
+
+  content String? @db.Text
+
+  imageUrl String?
+  videoUrl String?
+
+  visibility PostVisibility @default(PUBLIC)
+
+  isEdited  Boolean @default(false)
+  isDeleted Boolean @default(false)
+
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  likes     Like[]
+  comments  Comment[]
+  bookmarks Bookmark[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  post Post @relation(fields:[postId],references:[id],onDelete:Cascade)
+
+  @@unique([userId,postId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model Comment {
+  id String @id @default(uuid())
+
+  content String @db.Text
+
+  userId String
+  postId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model Bookmark {
+  id String @id @default(uuid())
+
+  userId String
+  postId String
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}

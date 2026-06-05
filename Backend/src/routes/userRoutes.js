@@ -1,0 +1,12 @@
+const express = require("express");
+const router = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
+const {getMyProfileController, updateProfileController, getUserProfileController, updateProfilePictureController, updateBannerController, searchUsersController} = require("../controllers/userController");
+router.get("/me", authMiddleware, getMyProfileController);
+router.patch("/profile", authMiddleware, updateProfileController);
+router.patch("/profile-picture", authMiddleware, upload.single("profilePicture"), updateProfilePictureController);
+router.patch("/banner", authMiddleware, upload.single("bannerImage"), updateBannerController);
+router.get("/search", authMiddleware, searchUsersController);
+router.get("/:username", getUserProfileController);
+module.exports = router;

@@ -1,0 +1,208 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { likePost, unlikePost } from "../services/postApi";
+import CommentSection from "./CommentSection";
+
+function PostCard({ post, currentUserId, onDelete }) {
+
+  const initials = (
+    post.author?.firstName?.[0] ||
+    post.author?.username?.[0] ||
+    "U"
+  ).toUpperCase();
+
+  const navigate = useNavigate();
+
+  const [liked, setLiked] = useState(post.isLiked);
+  const [likesCount, setLikesCount] = useState(post.likesCount || 0);
+  const [showComments, setShowComments] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
+  const [bookmarked, setBookmarked] = useState(post.isBookmarked || false);
+
+  const actionStyle = {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.4rem",
+    background: "none",
+    border: "none",
+    color: "#888",
+    cursor: "pointer",
+    fontSize: "14px"
+  };
+
+  const handleLike = async () => {
+    try {
+      if (liked) {
+        await unlikePost(post.id);
+        setLiked(false);
+        setLikesCount((c) => c - 1);
+      } else {
+        await likePost(post.id);
+        setLiked(true);
+        setLikesCount((c) => c + 1);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleBookmark = async () => {
+    try {
+      if (bookmarked) {
+        await unbookmarkPost(post.id);
+        setBookmarked(false);
+      } else {
+        await bookmarkPost(post.id);
+        setBookmarked(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div style={{
+      padding: "1.25rem",
+      borderBottom: "1px solid #262626"
+    }}>
+
+      {/* Author Row */}
+      <div style={{
+        display: "flex",
+        gap: "0.75rem",
+        marginBottom: "0.75rem"
+      }}>
+
+        {/* Avatar */}
+        <div
+          onClick={() => navigate(`/profile/${post.author?.username}`)}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            overflow: "hidden",
+            background: "linear-gradient(135deg,#a855f7,#ec4899)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontWeight: 700,
+            cursor: "pointer",
+            flexShrink: 0
+          }}
+        >
+          {post.author?.profilePicture ? (
+            <img
+              src={post.author.profilePicture}
+              alt=""
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover"
+              }}
+            />
+          ) : (
+            initials
+          )}
+        </div>
+
+        {/* Author Info */}
+        <div style={{ flex: 1 }}>
+          <div
+            onClick={() => navigate(`/profile/${post.author?.username}`)}
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer"
+            }}
+          >
+            {post.author?.firstName || post.author?.username}
+          </div>
+
+          <div style={{
+            fontSize: 12,
+            color: "#737373"
+          }}>
+            @{post.author?.username} · {" "}
+            {new Date(post.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+
+        {/* Delete Button */}
+        {post.userId === currentUserId && (
+          <button
+            onClick={() => onDelete(post.id)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#888"
+            }}
+          >
+            🗑️
+          </button>
+        )}
+
+      </div>
+
+      {/* Post Content */}
+      <div style={{
+        lineHeight: 1.6,
+        color: "#d4d4d4"
+      }}>
+        {post.content}
+      </div>
+
+      {/* Actions Row */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "1rem",
+        marginTop: "0.75rem",
+        paddingTop: "0.75rem",
+        borderTop: "1px solid #262626"
+      }}>
+
+        {/* Like Button */}
+        <button
+          onClick={handleLike}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: liked ? "#ec4899" : "#888"
+          }}
+        >
+          {liked ? "❤️" : "🤍"} {likesCount}
+        </button>
+
+        {/* Comment Toggle Button */}
+        <button
+          onClick={() => setShowComments((prev) => !prev)}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "#888"
+          }}
+        >
+          💬 {commentsCount}
+        </button>
+
+      </div>
+
+      {/* Comment Section */}
+      {showComments && (
+        <CommentSection
+          postId={post.id}
+          currentUserId={currentUserId}
+          commentsCount={commentsCount}
+          setCommentsCount={setCommentsCount}
+        />
+      )}
+
+    </div>
+  );
+}
+
+export default PostCard;
