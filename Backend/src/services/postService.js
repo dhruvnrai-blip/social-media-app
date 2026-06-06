@@ -50,6 +50,10 @@ const getFeed=async(userId)=>{
    likes:{
     where:{userId},
     select:{id:true}
+   },
+   bookmarks:{
+    where:{userId},
+    select:{id:true}
    }
   },
   orderBy:{
@@ -61,7 +65,8 @@ const getFeed=async(userId)=>{
   ...post,
   likesCount:post._count.likes,
   commentsCount:post._count.comments,
-  isLiked:post.likes.length>0
+  isLiked:post.likes.length>0,
+  isBookmarked:post.bookmarks.length>0
 }));
 };
 
@@ -92,6 +97,10 @@ const getUserPosts=async(username,userId)=>{
    likes:{
     where:{userId},
     select:{id:true}
+   },
+   bookmarks:{
+    where:{userId},
+    select:{id:true}
    }
   },
   orderBy:{
@@ -103,7 +112,8 @@ const getUserPosts=async(username,userId)=>{
   ...post,
   likesCount:post._count.likes,
   commentsCount:post._count.comments,
-  isLiked:post.likes.length>0
+  isLiked:post.likes.length>0,
+  isBookmarked:post.bookmarks.length>0
 }));
 };
 
@@ -214,6 +224,31 @@ const deletePost=async(userId,postId)=>{
  });
 };
 
+const bookmarkPost=async(userId,postId)=>{
+ return prisma.bookmark.upsert({
+  where:{
+   userId_postId:{
+    userId,
+    postId
+   }
+  },
+  update:{},
+  create:{
+   userId,
+   postId
+  }
+ });
+};
+
+const unbookmarkPost=async(userId,postId)=>{
+ return prisma.bookmark.deleteMany({
+  where:{
+   userId,
+   postId
+  }
+ });
+};
+
 module.exports={
  createPost,
  getFeed,
@@ -223,5 +258,7 @@ module.exports={
  createComment,
  getComments,
  deleteComment,
- deletePost
+ deletePost,
+ bookmarkPost,
+ unbookmarkPost
 };

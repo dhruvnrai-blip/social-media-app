@@ -7,7 +7,9 @@ const{
  createComment,
  getComments,
  deleteComment,
- deletePost
+ deletePost,
+ bookmarkPost,
+ unbookmarkPost
 }=require("../services/postService");
 
 const create=async(req,res)=>{
@@ -144,6 +146,36 @@ const remove=async(req,res)=>{
  }
 };
 
+const bookmark=async(req,res)=>{
+ try{
+  const result=await bookmarkPost(
+   req.user.userId,
+   req.params.postId
+  );
+
+  res.status(200).json(result);
+ }catch(err){
+  res.status(400).json({
+   message:err.message
+  });
+ }
+};
+
+const unbookmark=async(req,res)=>{
+ try{
+  const result=await unbookmarkPost(
+   req.user.userId,
+   req.params.postId
+  );
+
+  res.status(200).json(result);
+ }catch(err){
+  res.status(400).json({
+   message:err.message
+  });
+ }
+};
+
 module.exports={
  create,
  feed,
@@ -153,5 +185,7 @@ module.exports={
  comment,
  comments,
  removeComment,
- remove
+ remove,
+ bookmark,
+ unbookmark
 };
