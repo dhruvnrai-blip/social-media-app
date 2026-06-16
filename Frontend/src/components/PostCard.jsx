@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { likePost, unlikePost, bookmarkPost, unbookmarkPost, getBookmarkedPosts  } from "../services/postApi";
 import CommentSection from "./CommentSection";
+import ShareMenu from "./ShareMenu";
 
 function PostCard({ post, currentUserId, onDelete }) {
 
@@ -189,6 +190,7 @@ function PostCard({ post, currentUserId, onDelete }) {
         >
           {bookmarked ? "🔖" : "📌"}
         </button>
+        <ShareMenu postId={post.id} />
 
       </div>
 

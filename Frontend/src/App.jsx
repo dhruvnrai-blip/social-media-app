@@ -8,6 +8,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerificationPending from "./pages/VerificationPending";
 import VerifyEmail from "./pages/VerifyEmail";
+import Post from "./pages/Post";
 function App() {
   return (
     <BrowserRouter>
@@ -22,6 +23,7 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />}/>
         <Route path="/verification-pending" element={<VerificationPending />}/>
         <Route path="/verify-email/:token" element={<VerifyEmail />}/>
+        <Route path="/post/:postId" element={<ProtectedRoute><Post /></ProtectedRoute>}/>
       </Routes>
     </BrowserRouter>
   );
