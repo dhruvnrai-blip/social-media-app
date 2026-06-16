@@ -338,6 +338,8 @@ function Profile() {
   const[followers,setFollowers]=useState([]);
   const[following,setFollowing]=useState([]); 
   const[posts,setPosts]=useState([]);
+  const[activeTab,setActiveTab]=useState("posts");
+  const [bookmarks,setBookmarks]=useState([]);
 
   const[isOwnProfile,setIsOwnProfile]=useState(true);
   const loadFeed=async(profileUsername)=>{

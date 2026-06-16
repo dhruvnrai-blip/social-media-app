@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { likePost, unlikePost, bookmarkPost, unbookmarkPost } from "../services/postApi";
+import { likePost, unlikePost, bookmarkPost, unbookmarkPost, getBookmarkedPosts  } from "../services/postApi";
 import CommentSection from "./CommentSection";
 
 function PostCard({ post, currentUserId, onDelete }) {

@@ -50,6 +50,11 @@ export const unbookmarkPost=async(postId)=>{
  return response.data;
 };
 
+export const getBookmarkedPosts=async()=>{
+ const response=await api.get("/posts/bookmarks");
+ return response.data;
+};
+
 export const deletePost=async(postId)=>{
  const response=await api.delete(`/posts/${postId}`);
  return response.data;
@@ -59,3 +64,4 @@ export const searchUsers=async(query)=>{
  const response=await api.get(`/users/search?q=${query}`);
  return response.data.users;
 };
+
