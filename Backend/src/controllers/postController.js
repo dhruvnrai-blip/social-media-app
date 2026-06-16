@@ -9,7 +9,8 @@ const{
  deleteComment,
  deletePost,
  bookmarkPost,
- unbookmarkPost
+ unbookmarkPost,
+ getBookmarkedPosts
 }=require("../services/postService");
 
 const create=async(req,res)=>{
@@ -176,6 +177,25 @@ const unbookmark=async(req,res)=>{
  }
 };
 
+const bookmarkedPosts=async(req,res)=>{
+ try{
+
+  const posts=
+   await getBookmarkedPosts(
+    req.user.userId
+   );
+
+  res.status(200).json(posts);
+
+ }catch(err){
+
+  res.status(400).json({
+   message:err.message
+  });
+
+ }
+};
+
 module.exports={
  create,
  feed,
@@ -187,5 +207,6 @@ module.exports={
  removeComment,
  remove,
  bookmark,
- unbookmark
+ unbookmark,
+ bookmarkedPosts
 };

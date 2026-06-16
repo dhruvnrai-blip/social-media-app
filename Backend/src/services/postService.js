@@ -249,6 +249,58 @@ const unbookmarkPost=async(userId,postId)=>{
  });
 };
 
+const getBookmarkedPosts=async(userId)=>{
+ const posts=await prisma.post.findMany({
+  where:{
+   isDeleted:false,
+   bookmarks:{
+    some:{userId}
+   }
+  },
+
+  include:{
+   author:{
+    select:{
+     id:true,
+     username:true,
+     firstName:true,
+     lastName:true,
+     profilePicture:true
+    }
+   },
+
+   _count:{
+    select:{
+     likes:true,
+     comments:true
+    }
+   },
+
+   likes:{
+    where:{userId},
+    select:{id:true}
+   },
+
+   bookmarks:{
+    where:{userId},
+    select:{id:true}
+   }
+  },
+
+  orderBy:{
+   createdAt:"desc"
+  }
+ });
+
+ return posts.map(post=>({
+  ...post,
+  likesCount:post._count.likes,
+  commentsCount:post._count.comments,
+  isLiked:post.likes.length>0,
+  isBookmarked:post.bookmarks.length>0
+ }));
+};
+
 module.exports={
  createPost,
  getFeed,
@@ -260,5 +312,6 @@ module.exports={
  deleteComment,
  deletePost,
  bookmarkPost,
- unbookmarkPost
+ unbookmarkPost,
+ getBookmarkedPosts
 };

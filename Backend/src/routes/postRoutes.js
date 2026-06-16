@@ -14,11 +14,13 @@ const{
  like,
  unlike,
  bookmark,
- unbookmark
+ unbookmark,
+ bookmarkedPosts
 }=require("../controllers/postController");
 
 router.post("/",authMiddleware,create);
 router.get("/feed",authMiddleware,feed);
+router.get("/bookmarks",authMiddleware,bookmarkedPosts);
 router.get("/user/:username",authMiddleware,userPosts);
 router.post("/:postId/like",authMiddleware,like);
 router.delete("/:postId/like",authMiddleware,unlike);
