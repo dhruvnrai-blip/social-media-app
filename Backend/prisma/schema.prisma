@@ -113,6 +113,12 @@ model Post {
 
   author User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  repostOfId String?
+
+  repostOf Post? @relation("Reposts", fields: [repostOfId], references: [id])
+
+  reposts Post[] @relation("Reposts")
+
   likes     Like[]
   comments  Comment[]
   bookmarks Bookmark[]
@@ -128,10 +134,10 @@ model Like {
   postId    String
   createdAt DateTime @default(now())
 
-  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
-  post Post @relation(fields:[postId],references:[id],onDelete:Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@unique([userId,postId])
+  @@unique([userId, postId])
   @@index([postId])
   @@index([userId])
 }

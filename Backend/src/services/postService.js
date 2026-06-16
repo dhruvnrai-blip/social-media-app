@@ -1,5 +1,66 @@
 const prisma=require("../config/prisma");
 
+const buildPostInclude = (userId) => ({
+  author: {
+    select: {
+      id: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      profilePicture: true
+    }
+  },
+
+  repostOf: {
+    include: {
+      author: {
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          profilePicture: true
+        }
+      }
+    }
+  },
+
+  _count: {
+    select: {
+      likes: true,
+      comments: true,
+      reposts: true
+    }
+  },
+
+  likes: {
+    where: { userId },
+    select: { id: true }
+  },
+
+  bookmarks: {
+    where: { userId },
+    select: { id: true }
+  },
+
+  reposts: {
+    where: { userId },
+    select: { id: true }
+  }
+});
+
+const mapPost = (post) => ({
+  ...post,
+
+  likesCount: post._count.likes,
+  commentsCount: post._count.comments,
+  repostsCount: post._count.reposts,
+
+  isLiked: post.likes.length > 0,
+  isBookmarked: post.bookmarks.length > 0,
+  isReposted: post.reposts.length > 0
+});
+
 const createPost=async(userId,data)=>{
  const{content}=data;
 
@@ -31,43 +92,13 @@ const getFeed=async(userId)=>{
   where:{
    isDeleted:false
   },
-  include:{
-   author:{
-    select:{
-     id:true,
-     username:true,
-     firstName:true,
-     lastName:true,
-     profilePicture:true
-    }
-   },
-   _count:{
-    select:{
-     likes:true,
-     comments:true
-    }
-   },
-   likes:{
-    where:{userId},
-    select:{id:true}
-   },
-   bookmarks:{
-    where:{userId},
-    select:{id:true}
-   }
-  },
+  include: buildPostInclude(userId),
   orderBy:{
    createdAt:"desc"
   }
  });
 
- return posts.map(post=>({
-  ...post,
-  likesCount:post._count.likes,
-  commentsCount:post._count.comments,
-  isLiked:post.likes.length>0,
-  isBookmarked:post.bookmarks.length>0
-}));
+ return posts.map(mapPost);
 };
 
 const getUserPosts=async(username,userId)=>{
@@ -78,43 +109,36 @@ const getUserPosts=async(username,userId)=>{
     username
    }
   },
-  include:{
-   author:{
-    select:{
-     id:true,
-     username:true,
-     firstName:true,
-     lastName:true,
-     profilePicture:true
-    }
-   },
-   _count:{
-    select:{
-     likes:true,
-     comments:true
-    }
-   },
-   likes:{
-    where:{userId},
-    select:{id:true}
-   },
-   bookmarks:{
-    where:{userId},
-    select:{id:true}
-   }
-  },
+  include: buildPostInclude(userId),
   orderBy:{
    createdAt:"desc"
   }
  });
 
- return posts.map(post=>({
-  ...post,
-  likesCount:post._count.likes,
-  commentsCount:post._count.comments,
-  isLiked:post.likes.length>0,
-  isBookmarked:post.bookmarks.length>0
-}));
+ return posts.map(mapPost);
+};
+
+const getUserReposts=async(username,userId)=>{
+
+ const posts=await prisma.post.findMany({
+  where:{
+   isDeleted:false,
+   repostOfId:{
+    not:null
+   },
+   author:{
+    username
+   }
+  },
+
+  include:buildPostInclude(userId),
+
+  orderBy:{
+   createdAt:"desc"
+  }
+ });
+
+ return posts.map(mapPost);
 };
 
 const likePost=async(userId,postId)=>{
@@ -258,47 +282,48 @@ const getBookmarkedPosts=async(userId)=>{
    }
   },
 
-  include:{
-   author:{
-    select:{
-     id:true,
-     username:true,
-     firstName:true,
-     lastName:true,
-     profilePicture:true
-    }
-   },
-
-   _count:{
-    select:{
-     likes:true,
-     comments:true
-    }
-   },
-
-   likes:{
-    where:{userId},
-    select:{id:true}
-   },
-
-   bookmarks:{
-    where:{userId},
-    select:{id:true}
-   }
-  },
+  include: buildPostInclude(userId),
 
   orderBy:{
    createdAt:"desc"
   }
  });
 
- return posts.map(post=>({
-  ...post,
-  likesCount:post._count.likes,
-  commentsCount:post._count.comments,
-  isLiked:post.likes.length>0,
-  isBookmarked:post.bookmarks.length>0
- }));
+ return posts.map(mapPost);
+};
+
+const repostPost = async (userId, postId) => {
+
+  const originalPost = await prisma.post.findFirst({
+    where: {
+      id: postId,
+      isDeleted: false
+    }
+  });
+
+  if (!originalPost) {
+    throw new Error("Post not found");
+  }
+
+  const existingRepost = await prisma.post.findFirst({
+    where: {
+      userId,
+      repostOfId: postId,
+      isDeleted: false
+    }
+  });
+
+  if (existingRepost) {
+    throw new Error("Already reposted");
+  }
+
+  return prisma.post.create({
+    data: {
+      userId,
+      repostOfId: postId,
+      content: ""
+    }
+  });
 };
 
 const sharePost = async (userId, postId) => {
@@ -334,44 +359,14 @@ const getPostById = async (postId, userId) => {
       id: postId,
       isDeleted: false
     },
-    include: {
-      author: {
-        select: {
-          id: true,
-          username: true,
-          firstName: true,
-          lastName: true,
-          profilePicture: true
-        }
-      },
-      _count: {
-        select: {
-          likes: true,
-          comments: true
-        }
-      },
-      likes: {
-        where: { userId },
-        select: { id: true }
-      },
-      bookmarks: {
-        where: { userId },
-        select: { id: true }
-      }
-    }
+    include: buildPostInclude(userId)
   });
 
   if (!post) {
     throw new Error("Post not found");
   }
 
-  return {
-    ...post,
-    likesCount: post._count.likes,
-    commentsCount: post._count.comments,
-    isLiked: post.likes.length > 0,
-    isBookmarked: post.bookmarks.length > 0
-  };
+  return mapPost(post);
 };
 
 module.exports={
@@ -388,5 +383,7 @@ module.exports={
  unbookmarkPost,
  getBookmarkedPosts,
  sharePost,
- getPostById
+ getPostById,
+ repostPost,
+ getUserReposts
 };

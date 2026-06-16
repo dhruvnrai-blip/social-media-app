@@ -75,3 +75,19 @@ export const searchUsers=async(query)=>{
  return response.data.users;
 };
 
+export const repostPost=async(postId)=>{
+ const response=await api.post(
+  `/posts/${postId}/repost`
+ );
+
+ return response.data;
+};
+
+export const getUserReposts=async(username)=>{
+ const response=await api.get(
+  `/posts/user/${username}/reposts`
+ );
+
+ return response.data;
+};
+

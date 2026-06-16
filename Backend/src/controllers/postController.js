@@ -12,7 +12,9 @@ const{
  unbookmarkPost,
  getBookmarkedPosts,
  sharePost,
- getPostById
+ getPostById,
+ repostPost,
+ getUserReposts
 }=require("../services/postService");
 
 const create=async(req,res)=>{
@@ -56,6 +58,25 @@ const userPosts=async(req,res)=>{
   res.status(400).json({
    message:err.message
   });
+ }
+};
+
+const userReposts=async(req,res)=>{
+ try{
+
+  const posts=await getUserReposts(
+   req.params.username,
+   req.user.userId
+  );
+
+  res.json(posts);
+
+ }catch(err){
+
+  res.status(400).json({
+   message:err.message
+  });
+
  }
 };
 
@@ -232,10 +253,30 @@ const getPost = async (req, res) => {
   }
 };
 
+const repost = async (req, res) => {
+ try {
+
+  const result = await repostPost(
+   req.user.userId,
+   req.params.postId
+  );
+
+  res.status(201).json(result);
+
+ } catch (err) {
+
+  res.status(400).json({
+   message: err.message
+  });
+
+ }
+};
+
 module.exports={
  create,
  feed,
  userPosts,
+ userReposts,
  like,
  unlike,
  comment,
@@ -246,5 +287,6 @@ module.exports={
  unbookmark,
  bookmarkedPosts,
  share,
- getPost
+ getPost,
+ repost
 };

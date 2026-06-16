@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import NotificationBell from "../components/NotificationBell";
 import CreatePost from "../components/CreatePost";
-import {getFeed,getUserPosts,deletePost} from "../services/postApi";
+import {getFeed,getUserPosts,deletePost,getBookmarkedPosts,getUserReposts} from "../services/postApi";
 import PostCard from "../components/PostCard";
 import { useNavigate,useParams } from "react-router-dom";
 
@@ -191,6 +191,20 @@ const s = {
   sectionTitle: { fontSize: 15, fontWeight: 700, color: C.text, marginBottom: '0.875rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   editIconBtn: { background: 'none', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 16 },
   aboutText: { fontSize: 14, color: C.textSub, lineHeight: 1.7 },
+
+  tabRow: { display: 'flex', gap: '0.5rem' },
+  tabBtn: (active) => ({
+    background: active ? C.accentSoft : 'none',
+    border: `1px solid ${active ? C.accent : C.border}`,
+    color: active ? C.accent : C.textMuted,
+    borderRadius: 99,
+    padding: '6px 14px',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+  }),
+
   skillsWrap: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' },
   skillTag: {
     padding: '5px 12px', borderRadius: 99,
@@ -340,6 +354,7 @@ function Profile() {
   const[posts,setPosts]=useState([]);
   const[activeTab,setActiveTab]=useState("posts");
   const [bookmarks,setBookmarks]=useState([]);
+  const [reposts,setReposts]=useState([]);
 
   const[isOwnProfile,setIsOwnProfile]=useState(true);
   const loadFeed=async(profileUsername)=>{
@@ -354,6 +369,26 @@ function Profile() {
     }
     };
 
+  const loadBookmarks=async()=>{
+    try{
+      const data=await getBookmarkedPosts();
+      setBookmarks(data);
+    }catch(err){
+      console.error(err);
+    }
+  };
+
+  const loadReposts=async(profileUsername)=>{
+    try{
+      const data=await getUserReposts(
+        profileUsername
+      );
+      setReposts(data);
+    }catch(err){
+      console.error(err);
+    }
+  };
+
   useEffect(()=>{
 const fetchProfile=async()=>{
 try{
@@ -364,6 +399,8 @@ const response=username
 const u=response.data.user;
 setProfile(u);
 await loadFeed(u.username);
+await loadBookmarks();
+await loadReposts(u.username);
 const meResponse=await api.get("/users/me");
 
 setIsOwnProfile(
@@ -745,12 +782,17 @@ const initials = profile
               </div>
             </div>
 
-            {/* Posts */}
+            {/* Posts / Bookmarks / Reposts */}
             <div style={s.card}>
-              <div style={{ padding: '1.25rem 1.5rem 0.5rem', borderBottom: `1px solid ${C.border}` }}>
-                <div style={s.sectionTitle}>Posts</div>
+              <div style={{ padding: '1.25rem 1.5rem 0.75rem', borderBottom: `1px solid ${C.border}` }}>
+                <div style={s.tabRow}>
+                  <button style={s.tabBtn(activeTab==="posts")} onClick={()=>setActiveTab("posts")}>Posts</button>
+                  <button style={s.tabBtn(activeTab==="bookmarks")} onClick={()=>setActiveTab("bookmarks")}>Bookmarks</button>
+                  <button style={s.tabBtn(activeTab==="reposts")} onClick={()=>setActiveTab("reposts")}>Reposts</button>
+                </div>
               </div>
-              {posts.map(post=>(
+
+              {activeTab==="posts" && posts.map(post=>(
                 <div
                   key={post.id}
                   style={{
@@ -765,6 +807,34 @@ const initials = profile
                         ? handleDeletePost
                         : undefined
                     }
+                  />
+                </div>
+              ))}
+
+              {activeTab==="bookmarks" && bookmarks.map(post=>(
+                <div
+                  key={post.id}
+                  style={{
+                    borderBottom:`1px solid ${C.border}`
+                  }}
+                >
+                  <PostCard
+                    post={post}
+                    currentUserId={profile?.id}
+                  />
+                </div>
+              ))}
+
+              {activeTab==="reposts" && reposts.map(post=>(
+                <div
+                  key={post.id}
+                  style={{
+                    borderBottom:`1px solid ${C.border}`
+                  }}
+                >
+                  <PostCard
+                    post={post}
+                    currentUserId={profile?.id}
                   />
                 </div>
               ))}

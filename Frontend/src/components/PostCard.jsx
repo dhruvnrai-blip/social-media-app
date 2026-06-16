@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { likePost, unlikePost, bookmarkPost, unbookmarkPost, getBookmarkedPosts  } from "../services/postApi";
+import { likePost, unlikePost, bookmarkPost, unbookmarkPost, getBookmarkedPosts, repostPost  } from "../services/postApi";
 import CommentSection from "./CommentSection";
 import ShareMenu from "./ShareMenu";
 
 function PostCard({ post, currentUserId, onDelete }) {
 
+  const isRepost = !!post.repostOf;
+  const displayPost = isRepost ? post.repostOf : post;
+
   const initials = (
-    post.author?.firstName?.[0] ||
-    post.author?.username?.[0] ||
+    displayPost.author?.firstName?.[0] ||
+    displayPost.author?.username?.[0] ||
     "U"
   ).toUpperCase();
 
@@ -19,6 +22,8 @@ function PostCard({ post, currentUserId, onDelete }) {
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
   const [bookmarked, setBookmarked] = useState(post.isBookmarked || false);
+  const [reposted, setReposted] = useState(post.isReposted || false);
+  const [repostsCount, setRepostsCount] = useState(post.repostsCount || 0);
 
   const actionStyle = {
     display: "flex",
@@ -61,6 +66,19 @@ function PostCard({ post, currentUserId, onDelete }) {
     }
   };
 
+  const handleRepost = async () => {
+    try {
+      await repostPost(post.id);
+      setReposted(true);
+      setRepostsCount((prev) => prev + 1);
+    } catch (err) {
+      if (err.response?.data?.message === "Already reposted") {
+        return;
+      }
+      console.error(err);
+    }
+  };
+
   return (
     <div style={{
       padding: "1.25rem",
@@ -76,7 +94,7 @@ function PostCard({ post, currentUserId, onDelete }) {
 
         {/* Avatar */}
         <div
-          onClick={() => navigate(`/profile/${post.author?.username}`)}
+          onClick={() => navigate(`/profile/${displayPost.author?.username}`)}
           style={{
             width: 40,
             height: 40,
@@ -92,9 +110,9 @@ function PostCard({ post, currentUserId, onDelete }) {
             flexShrink: 0
           }}
         >
-          {post.author?.profilePicture ? (
+          {displayPost.author?.profilePicture ? (
             <img
-              src={post.author.profilePicture}
+              src={displayPost.author.profilePicture}
               alt=""
               style={{
                 width: "100%",
@@ -110,21 +128,21 @@ function PostCard({ post, currentUserId, onDelete }) {
         {/* Author Info */}
         <div style={{ flex: 1 }}>
           <div
-            onClick={() => navigate(`/profile/${post.author?.username}`)}
+            onClick={() => navigate(`/profile/${displayPost.author?.username}`)}
             style={{
               fontSize: 14,
               fontWeight: 600,
               cursor: "pointer"
             }}
           >
-            {post.author?.firstName || post.author?.username}
+            {displayPost.author?.firstName || displayPost.author?.username}
           </div>
 
           <div style={{
             fontSize: 12,
             color: "#737373"
           }}>
-            @{post.author?.username} · {" "}
+            @{displayPost.author?.username} · {" "}
             {new Date(post.createdAt).toLocaleDateString()}
           </div>
         </div>
@@ -146,12 +164,25 @@ function PostCard({ post, currentUserId, onDelete }) {
 
       </div>
 
+      {/* Repost Banner */}
+      {isRepost && (
+        <div
+          style={{
+            fontSize: "0.9rem",
+            color: "#888",
+            marginBottom: "10px"
+          }}
+        >
+          🔁 {post.author?.username} reposted
+        </div>
+      )}
+
       {/* Post Content */}
       <div style={{
         lineHeight: 1.6,
         color: "#d4d4d4"
       }}>
-        {post.content}
+        {displayPost.content}
       </div>
 
       {/* Actions Row */}
@@ -178,6 +209,18 @@ function PostCard({ post, currentUserId, onDelete }) {
           style={actionStyle}
         >
           💬 {commentsCount}
+        </button>
+
+        {/* Repost Button */}
+        <button
+          onClick={handleRepost}
+          disabled={reposted}
+          style={{
+            ...actionStyle,
+            color: reposted ? "#16a34a" : "#888"
+          }}
+        >
+          🔁 {repostsCount}
         </button>
 
         {/* Bookmark Button */}
