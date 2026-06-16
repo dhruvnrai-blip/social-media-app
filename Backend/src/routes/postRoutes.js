@@ -15,7 +15,9 @@ const{
  unlike,
  bookmark,
  unbookmark,
- bookmarkedPosts
+ bookmarkedPosts,
+ share,
+ getPost
 }=require("../controllers/postController");
 
 router.post("/",authMiddleware,create);
@@ -26,6 +28,8 @@ router.post("/:postId/like",authMiddleware,like);
 router.delete("/:postId/like",authMiddleware,unlike);
 router.post("/:postId/bookmark",authMiddleware,bookmark);
 router.delete("/:postId/bookmark",authMiddleware,unbookmark);
+router.post("/:postId/share",authMiddleware,share);
+router.get("/:postId",authMiddleware,getPost);
 router.post("/:postId/comments",authMiddleware,comment);
 router.get("/:postId/comments",authMiddleware,comments);
 router.delete("/comments/:commentId",authMiddleware,removeComment);

@@ -301,6 +301,79 @@ const getBookmarkedPosts=async(userId)=>{
  }));
 };
 
+const sharePost = async (userId, postId) => {
+  const post = await prisma.post.findFirst({
+    where: {
+      id: postId,
+      isDeleted: false
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!post) {
+    throw new Error("Post not found");
+  }
+
+  await prisma.share.create({
+    data: {
+      userId,
+      postId
+    }
+  });
+
+  return {
+  url: `${process.env.CLIENT_URL}/post/${postId}`
+  };
+};
+
+const getPostById = async (postId, userId) => {
+  const post = await prisma.post.findFirst({
+    where: {
+      id: postId,
+      isDeleted: false
+    },
+    include: {
+      author: {
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          profilePicture: true
+        }
+      },
+      _count: {
+        select: {
+          likes: true,
+          comments: true
+        }
+      },
+      likes: {
+        where: { userId },
+        select: { id: true }
+      },
+      bookmarks: {
+        where: { userId },
+        select: { id: true }
+      }
+    }
+  });
+
+  if (!post) {
+    throw new Error("Post not found");
+  }
+
+  return {
+    ...post,
+    likesCount: post._count.likes,
+    commentsCount: post._count.comments,
+    isLiked: post.likes.length > 0,
+    isBookmarked: post.bookmarks.length > 0
+  };
+};
+
 module.exports={
  createPost,
  getFeed,
@@ -313,5 +386,7 @@ module.exports={
  deletePost,
  bookmarkPost,
  unbookmarkPost,
- getBookmarkedPosts
+ getBookmarkedPosts,
+ sharePost,
+ getPostById
 };
