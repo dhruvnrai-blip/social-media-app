@@ -175,7 +175,3 @@ Dark purple color scheme with consistent inline CSS-in-JS styling across all pag
 Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change.
 
 ---
-
-## 📄 License
-
-[MIT](https://choosealicense.com/licenses/mit/)
